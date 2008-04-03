@@ -1,13 +1,13 @@
 package HTTP::MobileAttribute;
 use strict;
 use warnings;
-our $VERSION = '0.01';
+our $VERSION = '0.02';
 use Class::Component;
 use HTTP::MobileAttribute::Request;
-use HTTP::MobileAttribute::CarrierDetecter;
+use HTTP::MobileAttribute::CarrierDetector;
 use Scalar::Util qw/refaddr/;
 
-__PACKAGE__->load_components(qw/Autocall::InjectMethod/);
+__PACKAGE__->load_components(qw/DisableDynamicPlugin Autocall::InjectMethod/);
 __PACKAGE__->load_plugins(qw/
     Carrier IS GPS
     Default::DoCoMo Default::ThirdForce Default::EZweb Default::NonMobile Default::AirHPhone
@@ -17,15 +17,27 @@ sub new {
     my ($class, $stuff) = @_;
 
     my $request = HTTP::MobileAttribute::Request->new($stuff);
-    my $carrier_longname = HTTP::MobileAttribute::CarrierDetecter->detect($request->get('User-Agent'));
-    my $self = $class->NEXT(
+
+    # XXX carrier name detection is actually simple, so instead of
+    # going through the hassle of doing Detector->detect, we simply
+    # create a function that does the right thing and use it
+    my $carrier_longname = HTTP::MobileAttribute::CarrierDetector::detect($request->get('User-Agent'));
+    my $carrier_class = $class->agent_class($carrier_longname);
+
+    for my $type (qw/ components plugins methods hooks /) {
+        my $method = "class_component_$type";
+        $carrier_class->$method($class->$method);
+    }
+
+    my $self = $carrier_class->NEXT(
         'new' => +{
             request          => $request,
             carrier_longname => $carrier_longname,
         }
     );
-    $self = bless {%$self}, "HTTP::MobileAttribute::Agent::$carrier_longname"; # rebless to carrier specific package.
-    $self->run_hook('initialize');
+
+    $self->run_hook("instance_clear"); # clear instance data
+    $self->run_hook("initialize_$carrier_longname");
     return $self;
 }
 
@@ -35,6 +47,8 @@ for my $accessor (qw/request carrier_longname/) {
 }
 
 sub user_agent { shift->request->get('User-Agent') }
+
+sub agent_class { 'HTTP::MobileAttribute::Agent::' . $_[1] }
 
 package # hide from pause
     HTTP::MobileAttribute::Agent::DoCoMo;
@@ -58,6 +72,8 @@ use base qw/HTTP::MobileAttribute/;
 
 1;
 __END__
+
+=encoding UTF-8
 
 =for stopwords aaaatttt gmail dotottto commmmm Kazuhiro Osawa Plaggable DoCoMo ThirdForce Vodafone docs
 
