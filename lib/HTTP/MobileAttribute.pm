@@ -1,7 +1,7 @@
 package HTTP::MobileAttribute;
 use strict;
 use warnings;
-our $VERSION = '0.03';
+our $VERSION = '0.04';
 use Class::Component;
 use HTTP::MobileAttribute::Request;
 use HTTP::MobileAttribute::CarrierDetector;
@@ -14,10 +14,7 @@ sub import
 {
     my $class   = shift;
     my %args    = @_;
-    my $plugins = $args{plugins} ||
-        # とりあえず動かすためだけに全部つっこんでみた。テストを分離させて、Core 以外はとっぱらうべき
-        [ qw(Core Carrier IS IS::ThirdForce XHTMLCompliant) ]
-    ;
+    my $plugins = delete $args{plugins} || [ 'Core' ];
 
     if (ref $plugins ne 'ARRAY') {
         $plugins = [ $plugins ];
