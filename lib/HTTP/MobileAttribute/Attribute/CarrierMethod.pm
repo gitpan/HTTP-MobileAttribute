@@ -4,9 +4,13 @@ use warnings;
 use base 'Class::Component::Attribute';
 
 sub register {
-    my ( $class, $plugin, $c, $method, $carrier, $code ) = @_;
+    my ( $class, $plugin, $c, $method, $param, $code ) = @_;
 
-    $c->agent_class($carrier)->register_method( $method => $plugin );
+    if (ref $param) {
+        $c->agent_class($param->[0])->register_method( $param->[1] => { plugin => $plugin, method => $method } );
+    } else {
+        $c->agent_class($param)->register_method( $method => $plugin );
+    }
 }
 
 1;

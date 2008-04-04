@@ -1,17 +1,36 @@
 package HTTP::MobileAttribute;
 use strict;
 use warnings;
-our $VERSION = '0.02';
+our $VERSION = '0.03';
 use Class::Component;
 use HTTP::MobileAttribute::Request;
 use HTTP::MobileAttribute::CarrierDetector;
-use Scalar::Util qw/refaddr/;
 
 __PACKAGE__->load_components(qw/DisableDynamicPlugin Autocall::InjectMethod/);
-__PACKAGE__->load_plugins(qw/
-    Carrier IS GPS
-    Default::DoCoMo Default::ThirdForce Default::EZweb Default::NonMobile Default::AirHPhone
-/);
+# TODO: I want to remove IS::ThirdForce from default plugins.
+
+# XXX: This really affects the first time H::MobileAttribute gets loaded
+sub import
+{
+    my $class   = shift;
+    my %args    = @_;
+    my $plugins = $args{plugins} ||
+        # とりあえず動かすためだけに全部つっこんでみた。テストを分離させて、Core 以外はとっぱらうべき
+        [ qw(Core Carrier IS IS::ThirdForce XHTMLCompliant) ]
+    ;
+
+    if (ref $plugins ne 'ARRAY') {
+        $plugins = [ $plugins ];
+    }
+    $class->load_plugins(@$plugins);
+}
+
+our %CARRIER_CLASSES;
+sub load_plugin {
+    my $class = shift;
+    %CARRIER_CLASSES = ();
+    $class->SUPER::load_plugin(@_);
+}
 
 sub new {
     my ($class, $stuff) = @_;
@@ -22,22 +41,25 @@ sub new {
     # going through the hassle of doing Detector->detect, we simply
     # create a function that does the right thing and use it
     my $carrier_longname = HTTP::MobileAttribute::CarrierDetector::detect($request->get('User-Agent'));
-    my $carrier_class = $class->agent_class($carrier_longname);
 
-    for my $type (qw/ components plugins methods hooks /) {
-        my $method = "class_component_$type";
-        $carrier_class->$method($class->$method);
+    my $carrier_class = $CARRIER_CLASSES{ $carrier_longname };
+    if (! $carrier_class) {
+        $carrier_class = $class->agent_class($carrier_longname);
+        for my $type (qw/ components plugins methods hooks /) {
+            my $method = "class_component_$type";
+            $carrier_class->$method($class->$method);
+        }
+        $CARRIER_CLASSES{ $carrier_longname } = $carrier_class;
     }
 
-    my $self = $carrier_class->NEXT(
-        'new' => +{
-            request          => $request,
-            carrier_longname => $carrier_longname,
-        }
-    );
+    my $self = $carrier_class->SUPER::new({
+        request          => $request,
+        carrier_longname => $carrier_longname,
+    });
 
-    $self->run_hook("instance_clear"); # clear instance data
-    $self->run_hook("initialize_$carrier_longname");
+    $self->create_accessors_delayed();
+    $self->parse();
+
     return $self;
 }
 
@@ -49,6 +71,28 @@ for my $accessor (qw/request carrier_longname/) {
 sub user_agent { shift->request->get('User-Agent') }
 
 sub agent_class { 'HTTP::MobileAttribute::Agent::' . $_[1] }
+
+my @delayed_accessors;
+
+sub create_accessors_delayed {
+    my ($self, ) = @_;
+
+    while (my $accessor_info = pop @delayed_accessors) {
+        for my $method (@{ $accessor_info->{accessors} }) {
+            no strict 'refs';
+            *{"$accessor_info->{package}::$method"} = sub { $_[1]->{$method} };
+            $self->agent_class($accessor_info->{carrier})->register_method(
+                $method => $accessor_info->{package}
+            );
+        }
+    }
+}
+
+sub register_accessors_delayed {
+    my ($self, $accessor_info) = @_;
+
+    push @delayed_accessors, $accessor_info;
+}
 
 package # hide from pause
     HTTP::MobileAttribute::Agent::DoCoMo;
@@ -75,7 +119,7 @@ __END__
 
 =encoding UTF-8
 
-=for stopwords aaaatttt gmail dotottto commmmm Kazuhiro Osawa Plaggable DoCoMo ThirdForce Vodafone docs
+=for stopwords aaaatttt gmail dotottto commmmm Kazuhiro Osawa Plaggable DoCoMo ThirdForce Vodafone docs Daisuke Maki
 
 =head1 NAME
 
@@ -119,19 +163,35 @@ carrier_longname が Vodafone じゃなくて ThirdForce を返すよ
 
 =head2 廃止したメソッド
 
-is_wap1, is_wap2. つかってないよね?
+可能な限り、HTTP::MobileAgent とメソッド名に互換性を持たせてある。
+ただし、今時どうみてもつかわんだろうというようなものは削ってある。
+
+具体的には
+
+    EZweb: is_wap1, is_wap2, is_win, is_tuka
+    DoCoMo->series, is_foma
+
+のあたり。つかってないよね?使ってる人いたら、Plugin::IS::DoCoMo とかのあたりにつくればいいよ
+
+あと、 DoCoMo の、たぶん当時はつかってたんだろうけど今はつかってないっぽいものも消してある(もともとつけられるからつけただけなのかもしらんけど)。
+
+    vendor
+    cache_size
+    html_version
 
 =head1 気になってること
 
 =head2 メモリつかいすぎ疑惑
 
-Singleton Method って遅くね?どうなんよ?
+まあ、たしょうメモリはいっぱいつかうよね。
 
 =head1 AUTHOR
 
 Tokuhiro Matsuno E<lt>tokuhirom aaaatttt gmail dotottto commmmmE<gt>
 
 Kazuhiro Osawa
+
+Daisuke Maki
 
 =head1 THANKS TO
 
