@@ -1,7 +1,7 @@
 use strict;
 use warnings;
-use Test::More tests => 748;
-use HTTP::MobileAttribute plugins => [qw/Core XHTMLCompliant IS Carrier/];
+use Test::More tests => 555;
+use HTTP::MobileAttribute plugins => [qw/Core XHTMLCompliant IS IS::DoCoMo CarrierLetter/];
 
 my @Tests = (
     # ua, version, html_version, model, cache_size, is_foma, vendor, series, options, xhtml_compliant
@@ -43,13 +43,14 @@ my @Tests = (
 for (@Tests) {
     my($ua, @data) = @$_;
     my $agent = HTTP::MobileAttribute->new($ua);
-    isa_ok $agent, 'HTTP::MobileAttribute';
     ok $agent->is_docomo && ! $agent->is_j_phone && !$agent->is_vodafone && ! $agent->is_ezweb;
     is $agent->name, 'DoCoMo';
     is $agent->user_agent, $ua,                "ua is $ua";
     is $agent->version, $data[0],        "version is $data[0]";
     is $agent->model, $data[2],                "model is $data[2]";
-    is $agent->is_foma, $data[4],        "is_foma";
+    if ($data[4]) {
+        ok $agent->is_foma,         "is_foma";
+    }
     is $agent->xhtml_compliant, $data[8], "xhtml compliant $ua";
     if ($data[7]) {
         is $agent->$_(), $data[7]->{$_},"testing $_" for keys %{$data[7]};
@@ -71,7 +72,6 @@ while (<DATA>) {
     chomp;
     local $ENV{HTTP_USER_AGENT} = $_;
     my $agent = HTTP::MobileAttribute->new;
-    isa_ok $agent, 'HTTP::MobileAttribute', "$_";
     is $agent->name, 'DoCoMo';
     ok $agent->is_docomo && ! $agent->is_j_phone && ! $agent->is_ezweb;
 }

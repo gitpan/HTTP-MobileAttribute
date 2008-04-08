@@ -1,6 +1,6 @@
 use strict;
-use Test::More tests => 249;
-use HTTP::MobileAttribute plugins => [qw/Core Carrier IS IS::ThirdForce/];
+use Test::More tests => 182;
+use HTTP::MobileAttribute plugins => [qw/Core CarrierLetter IS IS::ThirdForce/];
 
 my @Tests = (
     # ua, version, model, packet_compliant, serial_number, vendor, vendor_version, java_infos
@@ -25,7 +25,6 @@ my @Tests = (
 for (@Tests) {
     my($ua, @data) = @$_;
     my $agent = HTTP::MobileAttribute->new($ua);
-    isa_ok $agent, 'HTTP::MobileAttribute';
     ok !$agent->is_docomo && $agent->is_j_phone && $agent->is_vodafone && !$agent->is_ezweb;
     is $agent->name ,'J-PHONE';
 
@@ -62,7 +61,6 @@ while (<DATA>) {
     chomp;
     local $ENV{HTTP_USER_AGENT} = $_;
     my $agent = HTTP::MobileAttribute->new;
-    isa_ok $agent, 'HTTP::MobileAttribute', "$_";
     is $agent->name, 'J-PHONE';
     ok !$agent->is_docomo && $agent->is_j_phone && !$agent->is_ezweb;
 }
