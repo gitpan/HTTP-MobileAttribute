@@ -30,6 +30,7 @@ lib/HTTP/MobileAttribute/Plugin.pm
 lib/HTTP/MobileAttribute/Plugin/CarrierLetter.pm
 lib/HTTP/MobileAttribute/Plugin/Core.pm
 lib/HTTP/MobileAttribute/Plugin/Display.pm
+lib/HTTP/MobileAttribute/Plugin/Encoding.pm
 lib/HTTP/MobileAttribute/Plugin/GPS.pm
 lib/HTTP/MobileAttribute/Plugin/IS.pm
 lib/HTTP/MobileAttribute/Plugin/IS/DoCoMo.pm
@@ -58,4 +59,5 @@ t/11_softbank_base.t
 t/12_no_match.t
 t/Plugins/assets/DoCoMoDisplayMap.yaml
 t/Plugins/Display.t
+t/Plugins/Encoding.t
 t/Plugins/GPS.t

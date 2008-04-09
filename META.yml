@@ -17,5 +17,5 @@ no_index:
     - inc
     - t
 requires: 
-  Class::Component: 0.14
-version: 0.06
+  Class::Component: 0.15
+version: 0.07
