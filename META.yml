@@ -21,4 +21,4 @@ recommends:
 requires: 
   Class::Component: 0.15
 tests: t/*.t t/Plugins/*t
-version: 0.08
+version: 0.09
