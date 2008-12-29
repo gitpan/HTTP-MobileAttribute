@@ -9,9 +9,9 @@ use strict;
 use warnings;
 
 use Array::Compare;
-use Sub::Uplevel;
+use Sub::Uplevel 0.12;
 
-our $VERSION = '0.10';
+our $VERSION = '0.11';
 
 require Exporter;
 
@@ -24,8 +24,8 @@ our %EXPORT_TAGS = ( 'all' => [ qw(
 our @EXPORT_OK = ( @{ $EXPORT_TAGS{'all'} } );
 
 our @EXPORT = qw(
-	   warning_is   warnings_are
-       warning_like warnings_like
+    warning_is   warnings_are
+    warning_like warnings_like
 );
 
 use Test::Builder;
@@ -43,7 +43,7 @@ sub warnings_are (&$;$) {
         my ($called_from) = caller(0);  # to find out Carping methods
         push @got_warning, _canonical_got_warning($called_from, shift());
     };
-    uplevel 2,$block;
+    uplevel 1,$block;
     my $ok = _cmp_is( \@got_warning, \@exp_warning );
     $Tester->ok( $ok, $testname );
     $ok or _diag_found_warning(@got_warning),
@@ -63,7 +63,7 @@ sub warnings_like (&$;$) {
         my ($called_from) = caller(0);  # to find out Carping methods
         push @got_warning, _canonical_got_warning($called_from, shift());
     };
-    uplevel 2,$block;
+    uplevel 1,$block;
     my $ok = _cmp_like( \@got_warning, \@exp_warning );
     $Tester->ok( $ok, $testname );
     $ok or _diag_found_warning(@got_warning),
