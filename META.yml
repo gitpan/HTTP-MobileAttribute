@@ -1,24 +1,26 @@
---- 
-abstract: Yet Another HTTP::MobileAgent
-author: 
-  - Tokuhiro Matsuno <tokuhirom aaaatttt gmail dotottto commmmm>
-build_requires: 
+---
+abstract: 'Yet Another HTTP::MobileAgent'
+author:
+  - 'Tokuhiro Matsuno <tokuhirom aaaatttt gmail dotottto commmmm>'
+build_requires:
   Test::Warn: 0
   YAML: 0
 distribution_type: module
-generated_by: Module::Install version 0.680
+generated_by: 'Module::Install version 0.80'
 license: perl
-meta-spec: 
-  url: http://module-build.sourceforge.net/META-spec-v1.3.html
-  version: 1.3
+meta-spec:
+  url: http://module-build.sourceforge.net/META-spec-v1.4.html
+  version: 1.4
 name: HTTP-MobileAttribute
-no_index: 
-  directory: 
+no_index:
+  directory:
     - inc
     - t
-recommends: 
+recommends:
   Net::CIDR::MobileJP: 0.11
-requires: 
-  Class::Component: 0.15
-tests: t/*.t t/Plugins/*t
-version: 0.11.1
+requires:
+  Class::Component: 0.17
+  Filter::Util::Call: 0
+resources:
+  license: http://dev.perl.org/licenses/
+version: 0.14
