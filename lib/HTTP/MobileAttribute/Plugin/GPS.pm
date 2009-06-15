@@ -3,6 +3,8 @@ use strict;
 use warnings;
 use base qw/HTTP::MobileAttribute::Plugin/;
 
+__PACKAGE__->depends([qw/IS::ThirdForce/]);
+
 our $DoCoMoGPSModels = { map { $_ => 1 } qw(F661i F505iGPS) };
 
 # only for backward compatiblity
@@ -22,7 +24,8 @@ sub gc_i :CarrierMethod('DoCoMo', 'gps_compliant') {
 }
 
 sub gc_e :CarrierMethod('EZweb', 'gps_compliant') {
-    my @specs = split //, $ENV{ HTTP_X_UP_DEVCAP_MULTIMEDIA } || '';
+    my ($self, $c) = @_;
+    my @specs = split //, $c->request->get('x-up-devcap-multimedia');
     return defined $specs[ 1 ] && $specs[ 1 ] =~ /^[23]$/;
 }
 
@@ -36,3 +39,30 @@ sub gc_h :CarrierMethod('AirHPhone', 'gps_compliant') {
 }
 
 1;
+__END__
+
+=head1 NAME
+
+HTTP::MobileAttribute::Plugin::GPS - gps compliant?
+
+=head1 METHODS
+
+=over 4
+
+=item $agent->gps_compliant()
+
+GPS対応機種かどうかを返します
+
+=item $agent->is_gps();
+
+HTTP::MobileAgent との互換性のためだけに実装されています。つかわないでください。
+
+=back
+
+=head1 AUTHORS
+
+nekokak
+
+Tokuhiro Matsuno
+
+=cut
