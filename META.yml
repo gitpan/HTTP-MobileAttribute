@@ -4,7 +4,6 @@ author:
   - 'Tokuhiro Matsuno <tokuhirom aaaatttt gmail dotottto commmmm>'
 build_requires:
   ExtUtils::MakeMaker: 6.42
-  Test::Warn: 0
   YAML: 0
 configure_requires:
   ExtUtils::MakeMaker: 6.42
@@ -31,4 +30,4 @@ requires:
   perl: 5.8.1
 resources:
   license: http://dev.perl.org/licenses/
-version: 0.19_02
+version: 0.20
